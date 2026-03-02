@@ -100,6 +100,7 @@ export default function SplitView() {
   const [fontSize, setFontSize] = useState(14);
   const [padding, setPadding] = useState(24);
   const [layout, setLayout] = useState<"side" | "stack">("side");
+  const [grayDots, setGrayDots] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   // Highlight code with shiki
@@ -282,6 +283,23 @@ export default function SplitView() {
             </div>
           </div>
 
+          {/* Gray dots */}
+          <button
+            onClick={() => setGrayDots(!grayDots)}
+            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+              grayDots
+                ? "border-zinc-600 bg-zinc-700 text-white"
+                : "border-zinc-700/60 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <span className="flex gap-0.5">
+              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-400" : "bg-[#ff5f57]"}`} />
+              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-500" : "bg-[#febc2e]"}`} />
+              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-600" : "bg-[#28c840]"}`} />
+            </span>
+            Gray
+          </button>
+
           {/* Labels */}
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -398,7 +416,7 @@ export default function SplitView() {
             {/* Window Card */}
             <div
               style={{
-                background: "#0d1117",
+                background: "rgba(13, 17, 23, 0.85)",
                 borderRadius: "14px",
                 overflow: "hidden",
                 border: "1px solid rgba(255,255,255,0.07)",
@@ -418,9 +436,9 @@ export default function SplitView() {
                     padding: "18px 20px 0",
                   }}
                 >
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57" }} />
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#febc2e" }} />
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28c840" }} />
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#555" : "#ff5f57" }} />
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#777" : "#febc2e" }} />
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#999" : "#28c840" }} />
                 </div>
                 <div style={{ padding: `${padding}px`, paddingBottom: layout === "stack" ? `${padding / 2}px` : `${padding}px` }}>
                   {leftLabel && (
