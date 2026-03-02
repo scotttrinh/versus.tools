@@ -181,6 +181,7 @@ function SplitView() {
   const [layout, setLayout] = usePersist<"side" | "stack">("layout", "side");
   const [grayDots, setGrayDots] = usePersist("grayDots", false);
   const [fontValue, setFontValue] = usePersist<FontValue>("font", "geist");
+  const [ligatures, setLigatures] = usePersist("ligatures", true);
   const exportRef = useRef<HTMLDivElement>(null);
   const currentFont = FONTS.find((f) => f.value === fontValue) || FONTS[0];
 
@@ -328,6 +329,18 @@ function SplitView() {
               ))}
             </select>
           </div>
+
+          {/* Ligatures */}
+          <button
+            onClick={() => setLigatures(!ligatures)}
+            className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+              ligatures
+                ? "border-zinc-600 bg-zinc-700 text-white"
+                : "border-zinc-700/60 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Lig
+          </button>
 
           {/* Font Size */}
           <div className="flex items-center gap-2">
@@ -613,6 +626,7 @@ function SplitView() {
                     className="shiki-output"
                     style={{
                       fontFamily: currentFont.css,
+                      fontVariantLigatures: ligatures ? "normal" : "none",
                       fontSize: `${fontSize}px`,
                       lineHeight: 1.7,
                       whiteSpace: "pre",
@@ -655,6 +669,7 @@ function SplitView() {
                   className="shiki-output"
                   style={{
                     fontFamily: currentFont.css,
+                    fontVariantLigatures: ligatures ? "normal" : "none",
                     fontSize: `${fontSize}px`,
                     lineHeight: 1.7,
                     whiteSpace: "pre",
