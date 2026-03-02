@@ -415,7 +415,7 @@ export default function SplitView() {
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
-                    padding: `18px ${padding}px 0`,
+                    padding: "18px 20px 0",
                   }}
                 >
                   <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57" }} />
