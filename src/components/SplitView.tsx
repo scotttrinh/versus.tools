@@ -30,6 +30,7 @@ type Language = (typeof LANGUAGES)[number]["value"];
 interface Gradient {
   name: string;
   css: string;
+  dots?: boolean;
 }
 
 const GRADIENTS: Gradient[] = [
@@ -40,6 +41,11 @@ const GRADIENTS: Gradient[] = [
   {
     name: "Midnight",
     css: "linear-gradient(145deg, #0a0a0a 0%, #1a1a2e 50%, #16162a 100%)",
+  },
+  {
+    name: "Dots",
+    css: "#111111",
+    dots: true,
   },
   {
     name: "Charcoal",
@@ -335,7 +341,11 @@ export default function SplitView() {
                       ? "ring-2 ring-white ring-offset-2 ring-offset-zinc-950"
                       : "ring-1 ring-zinc-600 hover:ring-zinc-400"
                   }`}
-                  style={{ background: g.css }}
+                  style={{
+                    background: g.dots
+                      ? `radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1px) 0 0 / 5px 5px, ${g.css}`
+                      : g.css,
+                  }}
                 />
               ))}
             </div>
@@ -411,11 +421,25 @@ export default function SplitView() {
               padding: "52px",
               width: "fit-content",
               minWidth: layout === "stack" ? "auto" : "900px",
+              position: "relative",
             }}
           >
+            {/* Dot pattern overlay */}
+            {gradient.dots && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)",
+                  backgroundSize: "24px 24px",
+                }}
+              />
+            )}
             {/* Window Card */}
             <div
               style={{
+                position: "relative",
                 background: "rgba(13, 17, 23, 0.85)",
                 borderRadius: "14px",
                 overflow: "hidden",
