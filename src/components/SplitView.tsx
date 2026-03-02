@@ -176,7 +176,7 @@ function SplitView() {
   const [rightCode, setRightCode] = usePersist("rightCode", DEFAULT_RIGHT);
   const [leftLang, setLeftLang] = usePersist<Language>("leftLang", "typescript");
   const [rightLang, setRightLang] = usePersist<Language>("rightLang", "typescript");
-  const [gradientIndex, setGradientIndex] = usePersist("gradientIndex", 1);
+  const [gradientIndex, setGradientIndex] = usePersist("gradientIndex", 0);
   const [leftLabel, setLeftLabel] = usePersist("leftLabel", "Before");
   const [rightLabel, setRightLabel] = usePersist("rightLabel", "After");
   const [leftHtml, setLeftHtml] = useState("");
