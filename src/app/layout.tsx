@@ -14,7 +14,31 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "versus.tools — Side-by-Side Code Comparison",
-  description: "Create beautiful side-by-side code comparison images for social sharing",
+  description:
+    "Create beautiful side-by-side code comparison images for social sharing. Supports TypeScript, Python, Go, Rust, and more.",
+  metadataBase: new URL("https://versus.tools"),
+  openGraph: {
+    title: "versus.tools",
+    description:
+      "Create beautiful side-by-side code comparison images for social sharing.",
+    url: "https://versus.tools",
+    siteName: "versus.tools",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "versus.tools",
+    description:
+      "Create beautiful side-by-side code comparison images for social sharing.",
+    creator: "@1st1",
+  },
+  keywords: [
+    "code comparison",
+    "side by side",
+    "code screenshot",
+    "syntax highlighting",
+    "developer tools",
+  ],
 };
 
 export default function RootLayout({
