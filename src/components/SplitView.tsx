@@ -706,6 +706,15 @@ function SplitView() {
               @1st1
             </a>
           </span>
+          <span className="text-zinc-700">·</span>
+          <a
+            href="https://vercel.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 transition-colors hover:text-zinc-300"
+          >
+            Deployed on ▲ Vercel
+          </a>
         </div>
       </footer>
     </div>
