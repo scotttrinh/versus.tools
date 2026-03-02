@@ -447,7 +447,7 @@ export default function SplitView() {
               />
 
               {/* Right panel */}
-              <div style={{ flex: 1, padding: `${padding}px`, paddingTop: layout === "stack" ? `${padding / 2}px` : `${padding}px` }}>
+              <div style={{ flex: 1, padding: `${padding}px`, paddingTop: layout === "stack" ? `${padding}px` : `${18 + 12 + padding}px` }}>
                 {rightLabel && (
                   <div
                     style={{
