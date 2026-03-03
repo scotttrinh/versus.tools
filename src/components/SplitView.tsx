@@ -871,7 +871,9 @@ function SplitView() {
                   <div style={{ flex: 1 }}>
                     {effectiveChrome !== "none" && effectiveChrome !== "nowindow" && <TrafficLights gray={effectiveChrome === "gray"} />}
                     <div style={{
-                      padding: `${padding}px`,
+                      paddingTop: `${padding}px`,
+                      paddingLeft: `${padding}px`,
+                      paddingRight: `${padding}px`,
                       paddingBottom: !diffMode && layout === "stack" ? `${padding / 2}px` : `${padding}px`,
                     }}>
                       {leftLabel && <PanelLabel label={leftLabel} vercel={gradient.vercel} light={gradient.light} />}
