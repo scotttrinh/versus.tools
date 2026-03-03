@@ -754,7 +754,7 @@ function SplitView() {
           </span>
           <span className="text-zinc-700">·</span>
           <a
-            href="https://vercel.com"
+            href="https://vercel.com/home"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 transition-colors hover:text-zinc-300"
