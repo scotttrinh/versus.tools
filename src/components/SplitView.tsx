@@ -7,10 +7,16 @@ import {
   useCallback,
   useContext,
   createContext,
+  useMemo,
   type KeyboardEvent,
 } from "react";
 import { codeToHtml } from "shiki";
 import { toPng, toSvg } from "html-to-image";
+import { type DiffResult, computeDiff } from "../lib/diff";
+import { TrafficLights } from "./TrafficLights";
+import { PanelLabel } from "./PanelLabel";
+import { DiffRender } from "./DiffRender";
+import { NormalRender } from "./NormalRender";
 
 const LANGUAGES = [
   { value: "typescript", label: "TypeScript" },
@@ -194,6 +200,7 @@ function SplitView() {
   const [fontValue, setFontValue] = usePersist<FontValue>("font", "geist");
   const [ligatures, setLigatures] = usePersist("ligatures", true);
   const [fontWeight, setFontWeight] = usePersist("fontWeight", 400);
+  const [diffMode, setDiffMode] = usePersist("diffMode", false);
   const exportRef = useRef<HTMLDivElement>(null);
   const currentFont = FONTS.find((f) => f.value === fontValue) || FONTS[0];
 
@@ -324,6 +331,11 @@ function SplitView() {
       cancelled = true;
     };
   }, [leftCode, rightCode, leftLang, rightLang, shikiTheme]);
+
+  const diffResult = useMemo<DiffResult | null>(() => {
+    if (!diffMode || !leftHtml || !rightHtml) return null;
+    return computeDiff(leftCode, rightCode, leftHtml, rightHtml);
+  }, [diffMode, leftCode, rightCode, leftHtml, rightHtml]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -504,6 +516,18 @@ function SplitView() {
               </button>
             </div>
           </div>
+
+          {/* Diff mode */}
+          <button
+            onClick={() => setDiffMode(!diffMode)}
+            className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+              diffMode
+                ? "border-zinc-600 bg-zinc-700 text-white"
+                : "border-zinc-700/60 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Diff
+          </button>
 
           {/* Gray dots */}
           <button
@@ -707,97 +731,59 @@ function SplitView() {
                 flexDirection: layout === "stack" ? "column" : "row",
               }}
             >
-              {/* Left panel */}
-              <div style={{ flex: 1 }}>
-                {/* Traffic lights */}
-                {!gradient.vercel && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "18px 20px 0",
-                    }}
-                  >
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#555" : "#ff5f57" }} />
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#777" : "#febc2e" }} />
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: grayDots ? "#999" : "#28c840" }} />
+              {diffMode && diffResult && layout === "stack" ? (
+                /* Unified diff: single panel */
+                <div style={{ flex: 1 }}>
+                  {!gradient.vercel && <TrafficLights grayDots={grayDots} />}
+                  <div style={{ padding: `${padding}px` }}>
+                    {(leftLabel || rightLabel) && (
+                      <PanelLabel
+                        label={`${leftLabel}${leftLabel && rightLabel ? " → " : ""}${rightLabel}`}
+                        vercel={gradient.vercel}
+                        light={gradient.light}
+                      />
+                    )}
+                    <DiffRender lines={diffResult.unified} fontSize={fontSize}
+                      fontFamily={currentFont.css} fontWeight={fontWeight} ligatures={ligatures} />
                   </div>
-                )}
-                <div style={{ padding: `${padding}px`, paddingBottom: layout === "stack" ? `${padding / 2}px` : `${padding}px` }}>
-                  {leftLabel && (
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        color: gradient.vercel ? (isVercelLight ? "#c0c0c0" : "#444444") : "#7d8590",
-                        marginBottom: "14px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        fontFamily:
-                          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      }}
-                    >
-                      {leftLabel}
-                    </div>
-                  )}
-                  <div
-                    className="shiki-output"
-                    style={{
-                      fontFamily: currentFont.css,
-                      fontVariantLigatures: ligatures ? "normal" : "none",
-                      fontWeight,
-                      fontSize: `${fontSize}px`,
-                      lineHeight: 1.7,
-                      whiteSpace: "pre",
-                    }}
-                    dangerouslySetInnerHTML={{ __html: leftHtml }}
-                  />
                 </div>
-              </div>
-
-              {/* Divider */}
-              <div
-                style={layout === "stack" ? {
-                  height: "1px",
-                  background: gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.06)",
-                } : {
-                  width: "1px",
-                  background: gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.06)",
-                }}
-              />
-
-              {/* Right panel */}
-              <div style={{ flex: 1, padding: `${padding}px`, paddingTop: layout === "stack" || gradient.vercel ? `${padding}px` : `${18 + 12 + padding}px` }}>
-                {rightLabel && (
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: gradient.vercel ? (isVercelLight ? "#c0c0c0" : "#444444") : "#7d8590",
-                      marginBottom: "14px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      fontFamily:
-                        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    }}
-                  >
-                    {rightLabel}
+              ) : (
+                /* Two panels: split diff OR normal */
+                <>
+                  <div style={{ flex: 1 }}>
+                    {!gradient.vercel && <TrafficLights grayDots={grayDots} />}
+                    <div style={{
+                      padding: `${padding}px`,
+                      paddingBottom: !diffMode && layout === "stack" ? `${padding / 2}px` : `${padding}px`,
+                    }}>
+                      {leftLabel && <PanelLabel label={leftLabel} vercel={gradient.vercel} light={gradient.light} />}
+                      {diffMode && diffResult
+                        ? <DiffRender lines={diffResult.left} fontSize={fontSize}
+                            fontFamily={currentFont.css} fontWeight={fontWeight} ligatures={ligatures} />
+                        : <NormalRender html={leftHtml} fontSize={fontSize}
+                            fontFamily={currentFont.css} fontWeight={fontWeight} ligatures={ligatures} />}
+                    </div>
                   </div>
-                )}
-                <div
-                  className="shiki-output"
-                  style={{
-                    fontFamily: currentFont.css,
-                    fontVariantLigatures: ligatures ? "normal" : "none",
-                    fontWeight,
-                    fontSize: `${fontSize}px`,
-                    lineHeight: 1.7,
-                    whiteSpace: "pre",
-                  }}
-                  dangerouslySetInnerHTML={{ __html: rightHtml }}
-                />
-              </div>
+
+                  {/* Divider */}
+                  <div style={layout === "stack"
+                    ? { height: "1px", background: gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.06)" }
+                    : { width: "1px", background: gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.06)" }
+                  } />
+
+                  <div style={{
+                    flex: 1, padding: `${padding}px`,
+                    paddingTop: layout === "stack" || gradient.vercel ? `${padding}px` : `${18 + 12 + padding}px`,
+                  }}>
+                    {rightLabel && <PanelLabel label={rightLabel} vercel={gradient.vercel} light={gradient.light} />}
+                    {diffMode && diffResult
+                      ? <DiffRender lines={diffResult.right} fontSize={fontSize}
+                          fontFamily={currentFont.css} fontWeight={fontWeight} ligatures={ligatures} />
+                      : <NormalRender html={rightHtml} fontSize={fontSize}
+                          fontFamily={currentFont.css} fontWeight={fontWeight} ligatures={ligatures} />}
+                  </div>
+                </>
+              )}
             </div>
           </div>
           {/* ---- End Exportable Card ---- */}
