@@ -10,7 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { codeToHtml } from "shiki";
-import { toPng } from "html-to-image";
+import { toPng, toSvg } from "html-to-image";
 
 const LANGUAGES = [
   { value: "typescript", label: "TypeScript" },
@@ -209,15 +209,50 @@ function SplitView() {
     document.head.appendChild(link);
   }, [fontValue]);
 
-  const handleExport = useCallback(async (pixelRatio: number = 2) => {
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    if (!exportOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [exportOpen]);
+
+  const handleExportPng = useCallback(async (pixelRatio: number) => {
     if (!exportRef.current) return;
     setExporting(true);
+    setExportOpen(false);
     try {
-      const dataUrl = await toPng(exportRef.current, {
-        pixelRatio,
-      });
+      const dataUrl = await toPng(exportRef.current, { pixelRatio });
       const link = document.createElement("a");
       link.download = `versus-tools-${pixelRatio}x.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, []);
+
+  const handleExportSvg = useCallback(async (transparentBg: boolean) => {
+    if (!exportRef.current) return;
+    setExporting(true);
+    setExportOpen(false);
+    try {
+      const el = exportRef.current;
+      const origBg = el.style.background;
+      if (transparentBg) el.style.background = "transparent";
+      const dataUrl = await toSvg(el);
+      if (transparentBg) el.style.background = origBg;
+      const link = document.createElement("a");
+      link.download = `versus-tools${transparentBg ? "-transparent" : ""}.svg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -300,21 +335,34 @@ function SplitView() {
             <span className="text-zinc-300">.</span>
             <span className="text-white">tools</span>
           </h1>
-          <div className="flex items-center gap-2">
-<button
-              onClick={() => handleExport(2)}
-              disabled={exporting}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {exporting ? "Exporting..." : "Export 2x"}
-            </button>
+          <div className="relative" ref={exportMenuRef}>
             <button
-              onClick={() => handleExport(4)}
+              onClick={() => setExportOpen(!exportOpen)}
               disabled={exporting}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              Export 4x
+              {exporting ? "Exporting..." : "Export"}
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="ml-0.5">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[200px] overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
+                <button onClick={() => handleExportPng(2)} className="w-full px-4 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800">
+                  Export PNG 2x
+                </button>
+                <button onClick={() => handleExportPng(4)} className="w-full px-4 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800">
+                  Export PNG 4x
+                </button>
+                <div className="mx-3 my-1 border-t border-zinc-700/60" />
+                <button onClick={() => handleExportSvg(false)} className="w-full px-4 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800">
+                  Export SVG
+                </button>
+                <button onClick={() => handleExportSvg(true)} className="w-full px-4 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800">
+                  Export SVG (transparent)
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
