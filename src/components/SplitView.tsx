@@ -507,14 +507,25 @@ function SplitView() {
                 ))}
               </select>
             </div>
-            <textarea
-              value={leftCode}
-              onChange={(e) => setLeftCode(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, setLeftCode)}
-              className="h-44 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 p-4 font-mono text-sm leading-relaxed text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none"
-              placeholder="Paste your first snippet..."
-              spellCheck={false}
-            />
+            <div className="relative h-44 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 focus-within:border-zinc-600">
+              <div
+                className="shiki-output pointer-events-none absolute inset-0 overflow-auto p-4 font-mono text-sm leading-relaxed"
+                aria-hidden="true"
+                dangerouslySetInnerHTML={{ __html: leftHtml }}
+              />
+              <textarea
+                value={leftCode}
+                onChange={(e) => setLeftCode(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, setLeftCode)}
+                onScroll={(e) => {
+                  const pre = e.currentTarget.previousElementSibling;
+                  if (pre) { pre.scrollTop = e.currentTarget.scrollTop; pre.scrollLeft = e.currentTarget.scrollLeft; }
+                }}
+                className="absolute inset-0 h-full w-full resize-none bg-transparent p-4 font-mono text-sm leading-relaxed text-transparent caret-zinc-100 placeholder-zinc-600 focus:outline-none"
+                placeholder="Paste your first snippet..."
+                spellCheck={false}
+              />
+            </div>
           </div>
           <div>
             <div className="mb-1.5 flex items-center justify-between">
@@ -534,14 +545,25 @@ function SplitView() {
                 ))}
               </select>
             </div>
-            <textarea
-              value={rightCode}
-              onChange={(e) => setRightCode(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, setRightCode)}
-              className="h-44 w-full resize-y rounded-lg border border-zinc-800 bg-zinc-900/80 p-4 font-mono text-sm leading-relaxed text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-none"
-              placeholder="Paste your second snippet..."
-              spellCheck={false}
-            />
+            <div className="relative h-44 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 focus-within:border-zinc-600">
+              <div
+                className="shiki-output pointer-events-none absolute inset-0 overflow-auto p-4 font-mono text-sm leading-relaxed"
+                aria-hidden="true"
+                dangerouslySetInnerHTML={{ __html: rightHtml }}
+              />
+              <textarea
+                value={rightCode}
+                onChange={(e) => setRightCode(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, setRightCode)}
+                onScroll={(e) => {
+                  const pre = e.currentTarget.previousElementSibling;
+                  if (pre) { pre.scrollTop = e.currentTarget.scrollTop; pre.scrollLeft = e.currentTarget.scrollLeft; }
+                }}
+                className="absolute inset-0 h-full w-full resize-none bg-transparent p-4 font-mono text-sm leading-relaxed text-transparent caret-zinc-100 placeholder-zinc-600 focus:outline-none"
+                placeholder="Paste your second snippet..."
+                spellCheck={false}
+              />
+            </div>
           </div>
         </div>
 
