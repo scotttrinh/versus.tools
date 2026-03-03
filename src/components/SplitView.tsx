@@ -43,6 +43,7 @@ interface Gradient {
   windowBg?: string;
   vercel?: boolean;
   light?: boolean;
+  lightBg?: boolean;
 }
 
 const GRADIENTS: Gradient[] = [
@@ -87,6 +88,7 @@ const GRADIENTS: Gradient[] = [
   {
     name: "Snow",
     css: "linear-gradient(145deg, #ffffff 0%, #f9fafb 50%, #ffffff 100%)",
+    lightBg: true,
   },
   {
     name: "Transparent",
@@ -332,23 +334,32 @@ function SplitView() {
 
   const gradient = GRADIENTS[gradientIndex] || GRADIENTS[0];
   const isVercelLight = gradient.vercel && gradient.windowBg === "#ffffff";
-  const shikiTheme = gradient.light ? currentSyntaxTheme.light : currentSyntaxTheme.dark;
+  const effectiveChrome = gradient.vercel ? "none" : chrome;
+  const needsLightTheme = (gradient.light && effectiveChrome !== "nowindow")
+    || (gradient.lightBg && effectiveChrome === "nowindow");
+  const shikiTheme = needsLightTheme ? currentSyntaxTheme.light : currentSyntaxTheme.dark;
 
   // Highlight code with shiki
   useEffect(() => {
     let cancelled = false;
     const stripFont = (html: string) =>
       html.replace(/font-family:[^;"']*/g, "");
-    // Transformer: make `type` a keyword in Python
-    const pyTypeKeyword = {
-      span(el: any) {
-        const text = el.children?.[0];
-        if (text?.type === "text" && text.value === "type") {
-          el.properties.style = (el.properties.style || "") + ";font-weight:bold";
+    // Make `type` look like a keyword in Python by copying the color from `for`/`if`/etc.
+    const fixPyType = (html: string, lang: string) => {
+      if (lang !== "python") return html;
+      const m = html.match(/<span style="([^"]*)">(?:for|if|return|while|import|from|class|def)<\/span>/);
+      if (!m) return html;
+      const kwStyle = m[1];
+      // `type` may be alone or grouped with following text (e.g. "type Pick ")
+      return html.replace(
+        /<span style="([^"]*)">(type)([ \t][^<]*)?<\/span>/g,
+        (_, origStyle, kw, rest) => {
+          const boldPart = `<span style="${kwStyle}">${kw}</span>`;
+          if (rest) return boldPart + `<span style="${origStyle}">${rest}</span>`;
+          return boldPart;
         }
-      },
+      );
     };
-    const tfFor = (lang: string) => lang === "python" ? [pyTypeKeyword] : [];
     async function highlight() {
       try {
         const editorTheme = currentSyntaxTheme.dark;
@@ -357,21 +368,23 @@ function SplitView() {
           : [editorTheme, shikiTheme];
         const results = await Promise.all(
           themes.flatMap((theme) => [
-            codeToHtml(leftCode || " ", { lang: leftLang, theme: theme as any, transformers: tfFor(leftLang) }),
-            codeToHtml(rightCode || " ", { lang: rightLang, theme: theme as any, transformers: tfFor(rightLang) }),
+            codeToHtml(leftCode || " ", { lang: leftLang, theme: theme as any }),
+            codeToHtml(rightCode || " ", { lang: rightLang, theme: theme as any }),
           ])
         );
         if (!cancelled) {
+          const processL = (html: string) => fixPyType(stripFont(html), leftLang);
+          const processR = (html: string) => fixPyType(stripFont(html), rightLang);
           if (themes.length === 1) {
-            setLeftEditorHtml(stripFont(results[0]));
-            setRightEditorHtml(stripFont(results[1]));
-            setLeftHtml(stripFont(results[0]));
-            setRightHtml(stripFont(results[1]));
+            setLeftEditorHtml(processL(results[0]));
+            setRightEditorHtml(processR(results[1]));
+            setLeftHtml(processL(results[0]));
+            setRightHtml(processR(results[1]));
           } else {
-            setLeftEditorHtml(stripFont(results[0]));
-            setRightEditorHtml(stripFont(results[1]));
-            setLeftHtml(stripFont(results[2]));
-            setRightHtml(stripFont(results[3]));
+            setLeftEditorHtml(processL(results[0]));
+            setRightEditorHtml(processR(results[1]));
+            setLeftHtml(processL(results[2]));
+            setRightHtml(processR(results[3]));
           }
         }
       } catch (e) {
@@ -828,10 +841,10 @@ function SplitView() {
             <div
               style={{
                 position: "relative",
-                background: chrome === "nowindow" ? "transparent" : (gradient.windowBg || "rgba(13, 17, 23, 0.85)"),
-                borderRadius: gradient.vercel || chrome === "nowindow" ? "0" : "14px",
+                background: effectiveChrome === "nowindow" ? "transparent" : (gradient.windowBg || "rgba(13, 17, 23, 0.85)"),
+                borderRadius: gradient.vercel || effectiveChrome === "nowindow" ? "0" : "14px",
                 overflow: "hidden",
-                border: chrome === "nowindow" ? "none" : `1px solid ${gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.07)"}`,
+                border: effectiveChrome === "nowindow" ? "none" : `1px solid ${gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.07)"}`,
                 display: "flex",
                 flexDirection: layout === "stack" ? "column" : "row",
               }}
@@ -839,7 +852,7 @@ function SplitView() {
               {diffMode && diffResult && layout === "stack" ? (
                 /* Unified diff: single panel */
                 <div style={{ flex: 1 }}>
-                  {!gradient.vercel && chrome !== "none" && chrome !== "nowindow" && <TrafficLights gray={chrome === "gray"} />}
+                  {effectiveChrome !== "none" && effectiveChrome !== "nowindow" && <TrafficLights gray={effectiveChrome === "gray"} />}
                   <div style={{ padding: `${padding}px` }}>
                     {(leftLabel || rightLabel) && (
                       <PanelLabel
@@ -856,7 +869,7 @@ function SplitView() {
                 /* Two panels: split diff OR normal */
                 <>
                   <div style={{ flex: 1 }}>
-                    {!gradient.vercel && chrome !== "none" && chrome !== "nowindow" && <TrafficLights gray={chrome === "gray"} />}
+                    {effectiveChrome !== "none" && effectiveChrome !== "nowindow" && <TrafficLights gray={effectiveChrome === "gray"} />}
                     <div style={{
                       padding: `${padding}px`,
                       paddingBottom: !diffMode && layout === "stack" ? `${padding / 2}px` : `${padding}px`,
@@ -878,7 +891,7 @@ function SplitView() {
 
                   <div style={{
                     flex: 1, padding: `${padding}px`,
-                    paddingTop: layout === "stack" || gradient.vercel || chrome === "none" || chrome === "nowindow" ? `${padding}px` : `${18 + 12 + padding}px`,
+                    paddingTop: layout === "stack" || effectiveChrome === "none" || effectiveChrome === "nowindow" ? `${padding}px` : `${18 + 12 + padding}px`,
                   }}>
                     {rightLabel && <PanelLabel label={rightLabel} vercel={gradient.vercel} light={gradient.light} />}
                     {diffMode && diffResult
