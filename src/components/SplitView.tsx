@@ -339,6 +339,16 @@ function SplitView() {
     let cancelled = false;
     const stripFont = (html: string) =>
       html.replace(/font-family:[^;"']*/g, "");
+    // Transformer: make `type` a keyword in Python
+    const pyTypeKeyword = {
+      span(el: any) {
+        const text = el.children?.[0];
+        if (text?.type === "text" && text.value === "type") {
+          el.properties.style = (el.properties.style || "") + ";font-weight:bold";
+        }
+      },
+    };
+    const tfFor = (lang: string) => lang === "python" ? [pyTypeKeyword] : [];
     async function highlight() {
       try {
         const editorTheme = currentSyntaxTheme.dark;
@@ -347,8 +357,8 @@ function SplitView() {
           : [editorTheme, shikiTheme];
         const results = await Promise.all(
           themes.flatMap((theme) => [
-            codeToHtml(leftCode || " ", { lang: leftLang, theme: theme as any }),
-            codeToHtml(rightCode || " ", { lang: rightLang, theme: theme as any }),
+            codeToHtml(leftCode || " ", { lang: leftLang, theme: theme as any, transformers: tfFor(leftLang) }),
+            codeToHtml(rightCode || " ", { lang: rightLang, theme: theme as any, transformers: tfFor(rightLang) }),
           ])
         );
         if (!cancelled) {
