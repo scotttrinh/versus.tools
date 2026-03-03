@@ -87,7 +87,6 @@ const GRADIENTS: Gradient[] = [
   {
     name: "Snow",
     css: "linear-gradient(145deg, #ffffff 0%, #f9fafb 50%, #ffffff 100%)",
-    light: true,
   },
   {
     name: "Transparent",
