@@ -241,25 +241,6 @@ function SplitView() {
     }
   }, []);
 
-  const handleCopy = useCallback(async () => {
-    if (!exportRef.current) return;
-    setExporting(true);
-    try {
-      const dataUrl = await toPng(exportRef.current, {
-        pixelRatio: 2,
-      });
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob }),
-      ]);
-    } catch (err) {
-      console.error("Copy failed:", err);
-    } finally {
-      setExporting(false);
-    }
-  }, []);
-
   // Handle Tab key in textareas
   const handleKeyDown = (
     e: KeyboardEvent<HTMLTextAreaElement>,
@@ -293,14 +274,7 @@ function SplitView() {
             <span className="text-white">tools</span>
           </h1>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleCopy}
-              disabled={exporting}
-              className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:opacity-50"
-            >
-              Copy Image
-            </button>
-            <button
+<button
               onClick={() => handleExport(2)}
               disabled={exporting}
               className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
