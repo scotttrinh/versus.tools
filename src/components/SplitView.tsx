@@ -494,7 +494,7 @@ function SplitView() {
               <input
                 value={leftLabel}
                 onChange={(e) => setLeftLabel(e.target.value)}
-                className="w-24 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
+                className="w-48 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
                 placeholder="Label"
               />
               <select
@@ -532,7 +532,7 @@ function SplitView() {
               <input
                 value={rightLabel}
                 onChange={(e) => setRightLabel(e.target.value)}
-                className="w-24 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
+                className="w-48 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
                 placeholder="Label"
               />
               <select
