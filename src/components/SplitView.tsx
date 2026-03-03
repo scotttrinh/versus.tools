@@ -481,25 +481,6 @@ function SplitView() {
             Gray
           </button>
 
-          {/* Labels */}
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-              Labels
-            </label>
-            <input
-              value={leftLabel}
-              onChange={(e) => setLeftLabel(e.target.value)}
-              className="w-24 rounded-md border border-zinc-700/60 bg-zinc-900 px-3 py-1.5 text-sm text-white focus:border-zinc-500 focus:outline-none"
-              placeholder="Left"
-            />
-            <input
-              value={rightLabel}
-              onChange={(e) => setRightLabel(e.target.value)}
-              className="w-24 rounded-md border border-zinc-700/60 bg-zinc-900 px-3 py-1.5 text-sm text-white focus:border-zinc-500 focus:outline-none"
-              placeholder="Right"
-            />
-          </div>
-
           {/* Gradients */}
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -544,9 +525,12 @@ function SplitView() {
         <div className="mb-8 grid grid-cols-2 gap-4">
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {leftLabel}
-              </label>
+              <input
+                value={leftLabel}
+                onChange={(e) => setLeftLabel(e.target.value)}
+                className="w-24 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
+                placeholder="Label"
+              />
               <select
                 value={leftLang}
                 onChange={(e) => setLeftLang(e.target.value as Language)}
@@ -568,9 +552,12 @@ function SplitView() {
           </div>
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                {rightLabel}
-              </label>
+              <input
+                value={rightLabel}
+                onChange={(e) => setRightLabel(e.target.value)}
+                className="w-24 rounded border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 focus:border-zinc-600 focus:text-zinc-300 focus:outline-none"
+                placeholder="Label"
+              />
               <select
                 value={rightLang}
                 onChange={(e) => setRightLang(e.target.value as Language)}
