@@ -110,8 +110,48 @@ const DEFAULT_RIGHT = `async function getUser(
   return res.json() as Promise<User>;
 }`;
 
-const SHIKI_THEME_DARK = "github-dark";
-const SHIKI_THEME_LIGHT = "github-light";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShikiTheme = string | Record<string, any>;
+
+const robPikeTheme = (fg: string, fgDim: string, type: "dark" | "light") => ({
+  name: `rob-pike-${type}`,
+  type,
+  colors: { "editor.background": "#000000", "editor.foreground": fgDim },
+  tokenColors: [
+    { settings: { foreground: fgDim } },
+    {
+      scope: [
+        "keyword", "storage", "storage.type", "storage.modifier",
+        "keyword.control", "keyword.operator.expression", "keyword.operator.new",
+      ],
+      settings: { foreground: fg, fontStyle: "bold" },
+    },
+  ],
+});
+
+interface SyntaxThemeEntry {
+  value: string;
+  label: string;
+  dark: ShikiTheme;
+  light: ShikiTheme;
+}
+
+const SYNTAX_THEMES: SyntaxThemeEntry[] = [
+  { value: "github", label: "GitHub", dark: "github-dark", light: "github-light" },
+  { value: "vscode", label: "VS Code", dark: "dark-plus", light: "light-plus" },
+  { value: "solarized", label: "Solarized", dark: "solarized-dark", light: "solarized-light" },
+  { value: "catppuccin", label: "Catppuccin", dark: "catppuccin-mocha", light: "catppuccin-latte" },
+  { value: "one", label: "One", dark: "one-dark-pro", light: "one-light" },
+  { value: "nightowl", label: "Night Owl", dark: "night-owl", light: "night-owl-light" },
+  { value: "vitesse", label: "Vitesse", dark: "vitesse-dark", light: "vitesse-light" },
+  { value: "rosepine", label: "Rosé Pine", dark: "rose-pine", light: "rose-pine-dawn" },
+  { value: "material", label: "Material", dark: "material-theme-darker", light: "material-theme-lighter" },
+  { value: "gruvbox", label: "Gruvbox", dark: "gruvbox-dark-medium", light: "gruvbox-light-medium" },
+  { value: "monokai", label: "Monokai", dark: "monokai", light: "light-plus" },
+  { value: "robpike", label: "Rob Pike", dark: robPikeTheme("#eeeeee", "#dddddd", "dark"), light: robPikeTheme("#111111", "#222222", "light") },
+];
+
+type SyntaxThemeValue = string;
 
 const FONTS = [
   {
@@ -195,13 +235,15 @@ function SplitView() {
   const [padding, setPadding] = usePersist("padding", 24);
   const [margin, setMargin] = usePersist("margin", 52);
   const [layout, setLayout] = usePersist<"side" | "stack">("layout", "side");
-  const [grayDots, setGrayDots] = usePersist("grayDots", false);
+  const [chrome, setChrome] = usePersist<"color" | "gray" | "none" | "nowindow">("chrome", "color");
   const [fontValue, setFontValue] = usePersist<FontValue>("font", "geist");
   const [ligatures, setLigatures] = usePersist("ligatures", true);
   const [fontWeight, setFontWeight] = usePersist("fontWeight", 400);
   const [diffMode, setDiffMode] = usePersist("diffMode", false);
+  const [syntaxTheme, setSyntaxTheme] = usePersist<SyntaxThemeValue>("syntaxTheme", "github");
   const exportRef = useRef<HTMLDivElement>(null);
   const currentFont = FONTS.find((f) => f.value === fontValue) || FONTS[0];
+  const currentSyntaxTheme = SYNTAX_THEMES.find((t) => t.value === syntaxTheme) || SYNTAX_THEMES[0];
 
   // Load Roboto Mono from Google Fonts when selected
   useEffect(() => {
@@ -290,7 +332,7 @@ function SplitView() {
 
   const gradient = GRADIENTS[gradientIndex] || GRADIENTS[0];
   const isVercelLight = gradient.vercel && gradient.windowBg === "#ffffff";
-  const shikiTheme = gradient.light ? SHIKI_THEME_LIGHT : SHIKI_THEME_DARK;
+  const shikiTheme = gradient.light ? currentSyntaxTheme.light : currentSyntaxTheme.dark;
 
   // Highlight code with shiki
   useEffect(() => {
@@ -299,13 +341,14 @@ function SplitView() {
       html.replace(/font-family:[^;"']*/g, "");
     async function highlight() {
       try {
-        const themes = shikiTheme === SHIKI_THEME_DARK
+        const editorTheme = currentSyntaxTheme.dark;
+        const themes = shikiTheme === editorTheme
           ? [shikiTheme]
-          : [SHIKI_THEME_DARK, shikiTheme];
+          : [editorTheme, shikiTheme];
         const results = await Promise.all(
           themes.flatMap((theme) => [
-            codeToHtml(leftCode || " ", { lang: leftLang, theme }),
-            codeToHtml(rightCode || " ", { lang: rightLang, theme }),
+            codeToHtml(leftCode || " ", { lang: leftLang, theme: theme as any }),
+            codeToHtml(rightCode || " ", { lang: rightLang, theme: theme as any }),
           ])
         );
         if (!cancelled) {
@@ -329,7 +372,7 @@ function SplitView() {
     return () => {
       cancelled = true;
     };
-  }, [leftCode, rightCode, leftLang, rightLang, shikiTheme]);
+  }, [leftCode, rightCode, leftLang, rightLang, shikiTheme, currentSyntaxTheme.dark]);
 
   const diffResult = useMemo<DiffResult | null>(() => {
     if (!diffMode || !leftHtml || !rightHtml) return null;
@@ -393,6 +436,22 @@ function SplitView() {
             >
               {FONTS.map((f) => (
                 <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Syntax Theme */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Theme
+            </label>
+            <select
+              value={syntaxTheme}
+              onChange={(e) => setSyntaxTheme(e.target.value as SyntaxThemeValue)}
+              className="rounded-md border border-zinc-700/60 bg-zinc-900 px-3 py-1.5 text-sm text-white focus:border-zinc-500 focus:outline-none"
+            >
+              {SYNTAX_THEMES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
           </div>
@@ -528,22 +587,59 @@ function SplitView() {
             Diff
           </button>
 
-          {/* Gray dots */}
-          <button
-            onClick={() => setGrayDots(!grayDots)}
-            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
-              grayDots
-                ? "border-zinc-600 bg-zinc-700 text-white"
-                : "border-zinc-700/60 bg-zinc-900 text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <span className="flex gap-0.5">
-              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-400" : "bg-[#ff5f57]"}`} />
-              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-500" : "bg-[#febc2e]"}`} />
-              <span className={`inline-block h-2 w-2 rounded-full ${grayDots ? "bg-zinc-600" : "bg-[#28c840]"}`} />
-            </span>
-            Gray
-          </button>
+          {/* Window chrome */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Chrome
+            </label>
+            <div className="flex overflow-hidden rounded-md border border-zinc-700/60">
+              <button
+                onClick={() => setChrome("color")}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-sm transition-colors ${
+                  chrome === "color" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span className="flex gap-0.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#ff5f57]" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#febc2e]" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#28c840]" />
+                </span>
+              </button>
+              <button
+                onClick={() => setChrome("gray")}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-sm transition-colors ${
+                  chrome === "gray" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span className="flex gap-0.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-400" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-600" />
+                </span>
+              </button>
+              <button
+                onClick={() => setChrome("none")}
+                className={`relative flex items-center gap-1 px-2.5 py-1.5 text-sm transition-colors ${
+                  chrome === "none" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span className="flex gap-0.5 opacity-40">
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
+                </span>
+                <span className="absolute inset-x-1.5 top-1/2 h-px -rotate-12 bg-zinc-400" />
+              </button>
+              <button
+                onClick={() => setChrome("nowindow")}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  chrome === "nowindow" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                Bare
+              </button>
+            </div>
+          </div>
 
           {/* Gradients */}
           <div className="flex items-center gap-2">
@@ -722,10 +818,10 @@ function SplitView() {
             <div
               style={{
                 position: "relative",
-                background: gradient.windowBg || "rgba(13, 17, 23, 0.85)",
-                borderRadius: gradient.vercel ? "0" : "14px",
+                background: chrome === "nowindow" ? "transparent" : (gradient.windowBg || "rgba(13, 17, 23, 0.85)"),
+                borderRadius: gradient.vercel || chrome === "nowindow" ? "0" : "14px",
                 overflow: "hidden",
-                border: `1px solid ${gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.07)"}`,
+                border: chrome === "nowindow" ? "none" : `1px solid ${gradient.vercel ? (isVercelLight ? "#e0e0e0" : "#333333") : "rgba(255,255,255,0.07)"}`,
                 display: "flex",
                 flexDirection: layout === "stack" ? "column" : "row",
               }}
@@ -733,7 +829,7 @@ function SplitView() {
               {diffMode && diffResult && layout === "stack" ? (
                 /* Unified diff: single panel */
                 <div style={{ flex: 1 }}>
-                  {!gradient.vercel && <TrafficLights grayDots={grayDots} />}
+                  {!gradient.vercel && chrome !== "none" && chrome !== "nowindow" && <TrafficLights gray={chrome === "gray"} />}
                   <div style={{ padding: `${padding}px` }}>
                     {(leftLabel || rightLabel) && (
                       <PanelLabel
@@ -750,7 +846,7 @@ function SplitView() {
                 /* Two panels: split diff OR normal */
                 <>
                   <div style={{ flex: 1 }}>
-                    {!gradient.vercel && <TrafficLights grayDots={grayDots} />}
+                    {!gradient.vercel && chrome !== "none" && chrome !== "nowindow" && <TrafficLights gray={chrome === "gray"} />}
                     <div style={{
                       padding: `${padding}px`,
                       paddingBottom: !diffMode && layout === "stack" ? `${padding / 2}px` : `${padding}px`,
@@ -772,7 +868,7 @@ function SplitView() {
 
                   <div style={{
                     flex: 1, padding: `${padding}px`,
-                    paddingTop: layout === "stack" || gradient.vercel ? `${padding}px` : `${18 + 12 + padding}px`,
+                    paddingTop: layout === "stack" || gradient.vercel || chrome === "none" || chrome === "nowindow" ? `${padding}px` : `${18 + 12 + padding}px`,
                   }}>
                     {rightLabel && <PanelLabel label={rightLabel} vercel={gradient.vercel} light={gradient.light} />}
                     {diffMode && diffResult
