@@ -792,7 +792,12 @@ function SplitView() {
           <span className="text-xs text-zinc-600">2x retina export</span>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-6">
+        <div
+          className="flex justify-center overflow-x-auto rounded-xl border border-zinc-800/60 p-6"
+          style={{
+            background: "conic-gradient(#1a1a1a 25%, #141414 25% 50%, #1a1a1a 50% 75%, #141414 75%) 0 0 / 16px 16px",
+          }}
+        >
           {/* ---- Exportable Card ---- */}
           <div
             ref={exportRef}
